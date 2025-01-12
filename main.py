@@ -81,9 +81,9 @@ def index_faces(bucket_name, image_key, collection_id, no_faces_bucket):
 
 if __name__ == "__main__":
     if verify_credentials():
-        bucket_name = input("Enter the S3 bucket name: ")
-        collection_id = input("Enter the Rekognition collection ID: ")
-        no_faces_bucket = input("Enter the bucket name for images with no faces: ")
+        bucket_name = 'gibson-photo' #input("Enter the S3 bucket name: ")
+        collection_id = 'gibson-photo' #input("Enter the Rekognition collection ID: ")
+        no_faces_bucket = 'gibson-photo-noface' #input("Enter the bucket name for images with no faces: ")
         create_collection_if_not_exists(collection_id)
         images = list_images(bucket_name)
         print(f"Found {len(images)} images in the bucket.")
