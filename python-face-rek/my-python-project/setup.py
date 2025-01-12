@@ -2,13 +2,15 @@ from setuptools import setup, find_packages
 
 setup(
     name='my-python-project',
+    use_scm_version=True,
+    setup_requires=['setuptools_scm', 'setuptools_scm_git_archive'],
     version='0.1.0',
-    author='Your Name',
-    author_email='your.email@example.com',
+    author='Tom Gibson',
+    author_email='tom.gibson@example.com',
     description='A brief description of your project',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
-    url='https://github.com/yourusername/my-python-project',
+    url='https://github.com/shooter51/my-python-project',
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
     install_requires=[
