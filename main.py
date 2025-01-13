@@ -55,6 +55,9 @@ def is_image_indexed(collection_id, image_key):
         return len(response['FaceMatches']) > 0
     except rekognition.exceptions.InvalidParameterException:
         return False
+    except rekognition.exceptions.InvalidImageFormatException:
+        print(f"Image {image_key} has an invalid format.")
+        return False
 
 def move_image_to_bucket(source_bucket, image_key, destination_bucket):
     s3 = boto3.client('s3')
