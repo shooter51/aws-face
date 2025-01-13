@@ -66,33 +66,42 @@ def move_image_to_bucket(source_bucket, image_key, destination_bucket):
     s3.delete_object(Bucket=source_bucket, Key=image_key)
     print(f"Moved {image_key} from {source_bucket} to {destination_bucket}")
 
-def index_faces(bucket_name, image_key, collection_id, no_faces_bucket):
+def index_faces(bucket_name, image_key, collection_id, no_faces_bucket, faces_bucket):
     if is_image_indexed(collection_id, image_key):
-        print(f"Image {image_key} is already indexed.")
+        print(f"Image {image_key} is already indexed. Moving to {faces_bucket}.")
+        move_image_to_bucket(bucket_name, image_key, faces_bucket)
         return []
     rekognition = boto3.client('rekognition')
     sanitized_key = sanitize_image_key(image_key)
-    response = rekognition.index_faces(
-        CollectionId=collection_id,
-        Image={'S3Object': {'Bucket': bucket_name, 'Name': image_key}},
-        ExternalImageId=sanitized_key,
-        DetectionAttributes=['ALL']
-    )
-    if not response['FaceRecords']:
+    try:
+        response = rekognition.index_faces(
+            CollectionId=collection_id,
+            Image={'S3Object': {'Bucket': bucket_name, 'Name': image_key}},
+            ExternalImageId=sanitized_key,
+            DetectionAttributes=['ALL']
+        )
+        if not response['FaceRecords']:
+            move_image_to_bucket(bucket_name, image_key, no_faces_bucket)
+        else:
+            move_image_to_bucket(bucket_name, image_key, faces_bucket)
+        return response['FaceRecords']
+    except rekognition.exceptions.InvalidImageFormatException:
+        print(f"Image {image_key} has an invalid format. Moving to {no_faces_bucket}.")
         move_image_to_bucket(bucket_name, image_key, no_faces_bucket)
-    return response['FaceRecords']
+        return []
 
 if __name__ == "__main__":
     if verify_credentials():
         bucket_name = 'gibson-photo' #input("Enter the S3 bucket name: ")
         collection_id = 'gibson-photo' #input("Enter the Rekognition collection ID: ")
         no_faces_bucket = 'gibson-photo-noface' #input("Enter the bucket name for images with no faces: ")
+        faces_bucket = 'gibson-photo-faces' #input("Enter the bucket name for images with faces: ")
         create_collection_if_not_exists(collection_id)
         images = list_images(bucket_name)
         print(f"Found {len(images)} images in the bucket.")
         for image in images:
             print(image)
-            face_records = index_faces(bucket_name, image, collection_id, no_faces_bucket)
+            face_records = index_faces(bucket_name, image, collection_id, no_faces_bucket, faces_bucket)
             print(f"Indexed {len(face_records)} faces in {image}.")
     else:
         print("Invalid AWS credentials.")
